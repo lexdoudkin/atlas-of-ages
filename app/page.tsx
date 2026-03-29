@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
+import { lightTheme, darkTheme, Theme } from '../lib/theme'
 
 const Map = dynamic(() => import('../components/Map'), { ssr: false })
 import Timeline from '../components/Timeline'
@@ -16,11 +17,21 @@ export default function Home() {
   const [selected, setSelected] = useState<Exploration | null>(null)
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(false)
+  const [isDark, setIsDark] = useState(false)
+
+  const t: Theme = isDark ? darkTheme : lightTheme
 
   useEffect(() => {
     setReady(true)
     getExplorations().then(setExplorations).catch(() => {})
+    // Check system preference
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    setIsDark(mq.matches)
   }, [])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+  }, [isDark])
 
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
     if (loading) return
@@ -48,67 +59,73 @@ export default function Home() {
 
   return (
     <div style={{
-      position: 'relative',
-      width: '100vw',
-      height: '100vh',
-      overflow: 'hidden',
-      background: '#050505'
+      position: 'relative', width: '100vw', height: '100vh',
+      overflow: 'hidden', background: t.bg, transition: 'background 0.4s ease',
     }}>
-      {/* Minimal floating header */}
+      {/* Header */}
       <header style={{
-        position: 'absolute',
-        top: 24,
-        left: 24,
-        zIndex: 30,
-        animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
+        background: t.bgGradientTop,
+        padding: '20px 24px 48px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        animation: 'fadeIn 0.6s ease',
       }}>
-        <h1 style={{
-          fontFamily: "'Playfair Display', serif",
-          fontSize: '28px',
-          fontWeight: 400,
-          letterSpacing: '0.08em',
-          color: '#F5F0EB',
-          textShadow: '0 2px 16px rgba(0,0,0,0.8), 0 0 40px rgba(212,165,116,0.15)',
-          margin: 0,
-          lineHeight: 1.2,
-        }}>
-          ATLAS OF AGES
-        </h1>
-        <p style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: '12px',
-          color: '#8A8178',
-          fontWeight: 300,
-          letterSpacing: '0.1em',
-          marginTop: '6px',
-          textShadow: '0 1px 8px rgba(0,0,0,0.6)',
-        }}>
-          Click anywhere to witness history
-        </p>
+        <div>
+          <h1 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: '26px', fontWeight: 500, letterSpacing: '0.06em',
+            color: t.text, margin: 0,
+          }}>
+            Atlas of Ages
+          </h1>
+          <p style={{
+            fontSize: '12px', color: t.textSecondary, fontWeight: 400,
+            letterSpacing: '0.04em', marginTop: '4px',
+          }}>
+            Click anywhere to witness history
+          </p>
+        </div>
+
+        {/* Theme toggle */}
+        <button
+          onClick={() => setIsDark(!isDark)}
+          style={{
+            background: t.surface, border: `1px solid ${t.surfaceBorder}`,
+            borderRadius: '10px', padding: '8px 14px', cursor: 'pointer',
+            fontSize: '14px', color: t.textSecondary,
+            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            transition: 'all 0.3s ease', marginTop: '2px',
+          }}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? '☀️' : '🌙'}
+        </button>
       </header>
 
-      {/* Full-screen edge-to-edge map */}
+      {/* Map */}
       <Map
         explorations={explorations}
         onMapClick={handleMapClick}
         onMarkerClick={setSelected}
         disabled={loading}
+        theme={t}
+        isDark={isDark}
       />
 
-      {/* Redesigned timeline */}
-      <Timeline year={year} onYearChange={setYear} />
+      {/* Timeline */}
+      <Timeline year={year} onYearChange={setYear} theme={t} />
 
-      {/* Elegant gallery sidebar (desktop) / bottom sheet (mobile) */}
+      {/* Gallery */}
       {explorations.length > 0 && (
-        <Gallery explorations={explorations} onSelect={setSelected} />
+        <Gallery explorations={explorations} onSelect={setSelected} theme={t} />
       )}
 
-      {/* Cinematic loading overlay */}
-      {loading && <LoadingOverlay year={year} />}
+      {/* Loading */}
+      {loading && <LoadingOverlay year={year} theme={t} />}
 
-      {/* Dramatic image modal */}
+      {/* Modal */}
       {selected && (
-        <ImageModal exploration={selected} onClose={() => setSelected(null)} />
+        <ImageModal exploration={selected} onClose={() => setSelected(null)} theme={t} />
       )}
     </div>
   )

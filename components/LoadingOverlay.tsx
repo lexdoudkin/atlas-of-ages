@@ -1,84 +1,43 @@
 'use client'
 
+import type { Theme } from '../lib/theme'
+
 function fmtYear(y: number): string {
   return y < 0 ? `${Math.abs(y)} BC` : `${y} AD`
 }
 
-export default function LoadingOverlay({ year }: { year: number }) {
+export default function LoadingOverlay({ year, theme }: { year: number; theme: Theme }) {
   return (
     <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 40,
-      background: 'rgba(5,5,5,0.75)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      position: 'fixed', inset: 0, zIndex: 50,
+      background: theme.modalOverlay,
+      backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      animation: 'fadeInScale 0.3s ease',
     }}>
       <div style={{
-        background: 'rgba(255,255,255,0.03)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '24px',
-        padding: '48px 64px',
-        textAlign: 'center',
-        boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
-        animation: 'fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        background: theme.modalBg, border: `1px solid ${theme.surfaceBorder}`,
+        borderRadius: '20px', padding: '40px 48px', textAlign: 'center',
+        boxShadow: theme.shadow,
+        transition: 'background 0.3s, border-color 0.3s',
       }}>
-        {/* Elegant circular progress indicator */}
         <div style={{
-          width: '64px',
-          height: '64px',
-          margin: '0 auto 32px',
-          position: 'relative',
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            border: '2px solid rgba(255,255,255,0.06)',
-            borderRadius: '50%',
-          }} />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            border: '2px solid transparent',
-            borderTopColor: '#D4A574',
-            borderRadius: '50%',
-            animation: 'spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite',
-          }} />
-          <div style={{
-            position: 'absolute',
-            inset: '8px',
-            border: '1px solid transparent',
-            borderTopColor: '#C9956B',
-            borderRadius: '50%',
-            animation: 'spin 1.8s cubic-bezier(0.5, 0, 0.5, 1) infinite reverse',
-            opacity: 0.6,
-          }} />
-        </div>
-
-        {/* Text */}
-        <div style={{
+          width: 48, height: 48,
+          border: `2px solid ${theme.surfaceBorder}`,
+          borderTopColor: theme.accent,
+          borderRadius: '50%', margin: '0 auto 20px',
+          animation: 'spin 1s linear infinite',
+        }} />
+        <p style={{
           fontFamily: "'Playfair Display', serif",
-          fontSize: '24px',
-          fontWeight: 300,
-          color: '#F5F0EB',
-          letterSpacing: '0.08em',
-          marginBottom: '12px',
-          animation: 'shimmer 2s ease-in-out infinite',
+          fontSize: '22px', fontWeight: 400, color: theme.text,
+          letterSpacing: '0.04em',
         }}>
           Reconstructing {fmtYear(year)}
-        </div>
+        </p>
         <p style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: '13px',
-          color: '#8A8178',
-          fontWeight: 300,
-          letterSpacing: '0.04em',
+          fontSize: '13px', color: theme.textSecondary,
+          marginTop: '8px', fontWeight: 300,
         }}>
           Generating historical imagery
         </p>
