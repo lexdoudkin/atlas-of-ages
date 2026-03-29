@@ -9,6 +9,7 @@ import Timeline from '../components/Timeline'
 import Gallery from '../components/Gallery'
 import ImageModal from '../components/ImageModal'
 import LoadingOverlay from '../components/LoadingOverlay'
+import ConfirmPin from '../components/ConfirmPin'
 import { Exploration, saveExploration, getExplorations } from '../lib/storage'
 
 export default function Home() {
@@ -18,13 +19,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(false)
   const [isDark, setIsDark] = useState(false)
+  const [pendingClick, setPendingClick] = useState<{lat: number, lng: number} | null>(null)
 
   const t: Theme = isDark ? darkTheme : lightTheme
 
   useEffect(() => {
     setReady(true)
     getExplorations().then(setExplorations).catch(() => {})
-    // Default to light mode, check localStorage for preference
     const saved = localStorage.getItem('atlas-theme')
     if (saved === 'dark') setIsDark(true)
   }, [])
@@ -33,8 +34,15 @@ export default function Home() {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
-  const handleMapClick = useCallback(async (lat: number, lng: number) => {
+  const handleMapClick = useCallback((lat: number, lng: number) => {
     if (loading) return
+    setPendingClick({ lat, lng })
+  }, [loading])
+
+  const handleConfirm = useCallback(async () => {
+    if (!pendingClick || loading) return
+    const { lat, lng } = pendingClick
+    setPendingClick(null)
     setLoading(true)
     try {
       const res = await fetch('/api/generate', {
@@ -53,7 +61,11 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [year, loading])
+  }, [pendingClick, year, loading])
+
+  const handleCancel = useCallback(() => {
+    setPendingClick(null)
+  }, [])
 
   if (!ready) return null
 
@@ -62,11 +74,16 @@ export default function Home() {
       position: 'relative', width: '100vw', height: '100vh',
       overflow: 'hidden', background: t.bg, transition: 'background 0.4s ease',
     }}>
+      {/* Vignette overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+        background: `radial-gradient(ellipse 80% 80% at 50% 50%, transparent 50%, ${t.bg}88 75%, ${t.bg} 100%)`,
+      }} />
+
       {/* Header */}
       <header style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
-        background: t.bgGradientTop,
-        padding: '20px 24px 48px',
+        padding: '20px 24px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
         animation: 'fadeIn 0.6s ease',
       }}>
@@ -82,11 +99,9 @@ export default function Home() {
             fontSize: '12px', color: t.textSecondary, fontWeight: 400,
             letterSpacing: '0.04em', marginTop: '4px',
           }}>
-            Click anywhere to witness history
+            Click anywhere to explore
           </p>
         </div>
-
-        {/* Theme toggle */}
         <button
           onClick={() => { const next = !isDark; setIsDark(next); localStorage.setItem('atlas-theme', next ? 'dark' : 'light') }}
           style={{
@@ -110,7 +125,20 @@ export default function Home() {
         disabled={loading}
         theme={t}
         isDark={isDark}
+        pendingClick={pendingClick}
       />
+
+      {/* Confirm pin popup */}
+      {pendingClick && !loading && (
+        <ConfirmPin
+          lat={pendingClick.lat}
+          lng={pendingClick.lng}
+          year={year}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          theme={t}
+        />
+      )}
 
       {/* Timeline */}
       <Timeline year={year} onYearChange={setYear} theme={t} />

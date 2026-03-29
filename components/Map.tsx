@@ -11,11 +11,12 @@ interface Props {
   disabled: boolean
   theme: Theme
   isDark: boolean
+  pendingClick?: { lat: number; lng: number } | null
 }
 
 const COUNTRIES_URL = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson'
 
-export default function Map({ explorations, onMapClick, onMarkerClick, disabled, theme, isDark }: Props) {
+export default function Map({ explorations, onMapClick, onMarkerClick, disabled, theme, isDark, pendingClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null)
@@ -117,7 +118,35 @@ export default function Map({ explorations, onMapClick, onMarkerClick, disabled,
     map.getContainer().style.background = theme.mapBg
   }, [isDark, theme, mapReady])
 
-  // Update markers
+  // Pending click marker
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pendingMarkerRef = useRef<any>(null)
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return
+    const { map, L } = mapRef.current
+
+    if (pendingMarkerRef.current) {
+      map.removeLayer(pendingMarkerRef.current)
+      pendingMarkerRef.current = null
+    }
+
+    if (pendingClick) {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:20px;height:20px;border-radius:50%;
+          background:${theme.accent};
+          border:3px solid #fff;
+          box-shadow:0 2px 8px rgba(0,0,0,0.3);
+        "></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      })
+      pendingMarkerRef.current = L.marker([pendingClick.lat, pendingClick.lng], { icon, interactive: false }).addTo(map)
+    }
+  }, [pendingClick, mapReady, theme])
+
+  // Update exploration markers (clean, no animations)
   useEffect(() => {
     if (!mapRef.current || !mapReady) return
     const { map, L } = mapRef.current
@@ -129,22 +158,14 @@ export default function Map({ explorations, onMapClick, onMarkerClick, disabled,
       const icon = L.divIcon({
         className: '',
         html: `<div style="
-          width:44px;height:44px;border-radius:50%;cursor:pointer;
-          transition:transform 0.2s ease;position:relative;
-        " onmouseenter="this.style.transform='scale(1.2)'" onmouseleave="this.style.transform='scale(1)'">
-          <div style="
-            position:absolute;inset:0;border-radius:50%;
-            background:radial-gradient(circle,${theme.accentGlow},transparent 70%);
-          "></div>
-          <div style="
-            position:absolute;inset:3px;border-radius:50%;
-            background-image:url(${exp.imageData});background-size:cover;background-position:center;
-            border:2px solid ${theme.markerBorder};
-            box-shadow:0 4px 16px rgba(0,0,0,0.3),0 0 24px ${theme.markerGlow};
-          "></div>
-        </div>`,
-        iconSize: [44, 44],
-        iconAnchor: [22, 22],
+          width:40px;height:40px;border-radius:50%;cursor:pointer;
+          transition:transform 0.2s ease;
+          background-image:url(${exp.imageData});background-size:cover;background-position:center;
+          border:2px solid ${theme.markerBorder};
+          box-shadow:0 2px 10px rgba(0,0,0,0.25);
+        " onmouseenter="this.style.transform='scale(1.15)'" onmouseleave="this.style.transform='scale(1)'"></div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
       })
 
       const marker = L.marker([exp.lat, exp.lng], { icon }).addTo(map)
