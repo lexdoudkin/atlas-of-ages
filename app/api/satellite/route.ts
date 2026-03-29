@@ -85,24 +85,44 @@ export async function GET(req: NextRequest) {
     const place = nominatim.address?.city || nominatim.address?.town || nominatim.address?.village || nominatim.display_name?.split(',')[0] || 'unnamed location'
     const elev = elevation.elevation?.[0] || 0
 
-    // Analyze terrain from location name + elevation + class
+    // Analyze terrain from location name + elevation + class + coordinates
+    // Amazon region: lat -10 to 5, lon -80 to -50
+    // Sahara: lat 15 to 35, lon -15 to 55
+    // Congo: lat -6 to 4, lon 12 to 30
+    
+    const inAmazon = latNum > -10 && latNum < 5 && lonNum > -80 && lonNum < -50
+    const inSahara = latNum > 15 && latNum < 35 && lonNum > -15 && lonNum < 55
+    const inCongo = latNum > -6 && latNum < 4 && lonNum > 12 && lonNum < 30
+    const inSiberia = latNum > 55 && (lonNum < -100 || lonNum > 80)
+    const inAntarctic = latNum < -60
+    const highAltitude = elev > 2500
+    const isWater = terrainClass === 'water' || terrainType === 'water' || terrainClass === 'waterway'
+    const isForest = place.toLowerCase().includes('forest') || place.toLowerCase().includes('wood')
+    const isDesert = place.toLowerCase().includes('desert') || place.toLowerCase().includes('sahara') || inSahara
+    
     let terrainDescription = ''
-    if (terrainClass === 'water' || terrainType === 'water') {
+    
+    if (isWater) {
       terrainDescription = 'WATER BODY: lake, river, or sea. Show ONLY water, no land, no buildings, no roads.'
-    } else if (terrainClass === 'natural' && terrainType === 'forest') {
-      terrainDescription = 'DENSE FOREST: thick trees, no visible roads or settlements. Show pristine wilderness.'
-    } else if (elev > 2500) {
-      terrainDescription = 'HIGH MOUNTAIN: alpine terrain above treeline. Show rocky peaks, sparse vegetation, extreme elevation.'
-    } else if (elev < 100 && (terrainClass === 'boundary' || place.toLowerCase().includes('sea'))) {
-      terrainDescription = 'COASTAL AREA: beach, dunes, sea cliffs. Show shoreline, waves, sand.'
-    } else if (place.toLowerCase().includes('desert') || place.toLowerCase().includes('sahara')) {
-      terrainDescription = 'DESERT: endless sand dunes, no vegetation, no water. Show arid landscape.'
-    } else if (place.toLowerCase().includes('amazon') || place.toLowerCase().includes('rainforest')) {
-      terrainDescription = 'RAINFOREST: extremely dense jungle, no clearings, no roads. Show untouched wilderness.'
-    } else if (terrainClass === 'place') {
+    } else if (inAmazon) {
+      terrainDescription = 'AMAZON RAINFOREST: extremely dense jungle, massive canopy, muddy river banks, no clearings, no roads, no settlements. Pristine untouched wilderness.'
+    } else if (inCongo) {
+      terrainDescription = 'CONGO RAINFOREST: thick dense jungle, tree canopy, humid environment, no visible civilization, NO roads or buildings.'
+    } else if (inSiberia) {
+      terrainDescription = 'SIBERIAN TAIGA/TUNDRA: sparse trees or empty frozen plains, vast wilderness, NO human structures, extreme cold environment. Show pristine natural landscape.'
+    } else if (inAntarctic) {
+      terrainDescription = 'ANTARCTIC ICE SHELF: endless white ice, glaciers, extreme cold, NO land features. Show only ice and snow.'
+    } else if (highAltitude) {
+      terrainDescription = 'HIGH MOUNTAIN: alpine terrain above treeline. Show rocky peaks, sparse vegetation, extreme elevation, no settlements.'
+    } else if (isDesert) {
+      terrainDescription = 'DESERT: endless sand dunes, sparse scrub vegetation, arid landscape. NO water, NO buildings, NO roads. Show barren desert.'
+    } else if (isForest) {
+      terrainDescription = 'DENSE FOREST: thick trees, woodland canopy, NO visible roads or settlements. Show pristine wilderness.'
+    } else if (terrainClass === 'place' || terrainClass === 'city') {
       terrainDescription = `SETTLEMENT: ${place}. Show buildings, streets, urban or rural architecture. MUST be historically accurate to ${year}.`
     } else {
-      terrainDescription = `LANDSCAPE near ${place}. Elevation ${elev}m. Terrain class: ${terrainClass}/${terrainType}. Show accurate geography.`
+      // Default: assume some settlement/civilization exists
+      terrainDescription = `LANDSCAPE near ${place}. Elevation ${elev}m. Show period-appropriate landscape and architecture for ${year}.`
     }
 
     // Tile providers for visual reference
