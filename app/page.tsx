@@ -24,9 +24,9 @@ export default function Home() {
   useEffect(() => {
     setReady(true)
     getExplorations().then(setExplorations).catch(() => {})
-    // Check system preference
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDark(mq.matches)
+    // Default to light mode, check localStorage for preference
+    const saved = localStorage.getItem('atlas-theme')
+    if (saved === 'dark') setIsDark(true)
   }, [])
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function Home() {
 
         {/* Theme toggle */}
         <button
-          onClick={() => setIsDark(!isDark)}
+          onClick={() => { const next = !isDark; setIsDark(next); localStorage.setItem('atlas-theme', next ? 'dark' : 'light') }}
           style={{
             background: t.surface, border: `1px solid ${t.surfaceBorder}`,
             borderRadius: '10px', padding: '8px 14px', cursor: 'pointer',
