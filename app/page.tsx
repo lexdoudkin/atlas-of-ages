@@ -46,24 +46,30 @@ export default function Home() {
 
   if (!ready) return null
 
-  const S = {
-    container: { position: 'relative' as const, width: '100vw', height: '100vh', overflow: 'hidden', background: '#000' },
-    header: {
-      position: 'absolute' as const, top: 0, left: 0, right: 0, zIndex: 30,
-      background: 'linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.6), transparent)',
-      padding: '20px 24px', pointerEvents: 'none' as const,
-    },
-    title: { fontSize: '28px', fontWeight: 200, letterSpacing: '0.2em', color: '#f1f5f9', textTransform: 'uppercase' as const },
-    subtitle: { fontSize: '13px', color: '#64748b', fontWeight: 300, letterSpacing: '0.1em', marginTop: '4px' },
-  }
-
   return (
-    <div style={S.container}>
-      <div style={S.header}>
-        <h1 style={S.title}>Atlas of Ages</h1>
-        <p style={S.subtitle}>Click anywhere to witness history</p>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000' }}>
+      {/* Header */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
+        background: 'linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.85) 60%, transparent 100%)',
+        padding: '24px 28px 40px',
+      }}>
+        <h1 style={{
+          fontSize: '32px', fontWeight: 400, letterSpacing: '0.15em',
+          color: '#fff', textTransform: 'uppercase', margin: 0,
+          textShadow: '0 2px 8px rgba(0,0,0,0.8)',
+        }}>
+          Atlas of Ages
+        </h1>
+        <p style={{
+          fontSize: '14px', color: '#9ca3af', fontWeight: 400,
+          letterSpacing: '0.05em', marginTop: '6px',
+        }}>
+          Click anywhere to witness history
+        </p>
       </div>
 
+      {/* Map */}
       <Map
         explorations={explorations}
         onMapClick={handleMapClick}
@@ -71,14 +77,18 @@ export default function Home() {
         disabled={loading}
       />
 
+      {/* Timeline */}
       <Timeline year={year} onYearChange={setYear} />
 
+      {/* Gallery */}
       {explorations.length > 0 && (
         <Gallery explorations={explorations} onSelect={setSelected} />
       )}
 
+      {/* Loading */}
       {loading && <LoadingOverlay year={year} />}
 
+      {/* Modal */}
       {selected && (
         <ImageModal exploration={selected} onClose={() => setSelected(null)} />
       )}
