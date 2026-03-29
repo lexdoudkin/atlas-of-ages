@@ -1,0 +1,31 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; width: 100%; overflow: hidden;
+  background: #000; color: #e2e8f0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.maplibregl-ctrl-attrib { display: none !important; }
+.maplibregl-ctrl-group {
+  background: rgba(15,23,42,0.8) !important;
+  border: 1px solid rgba(51,65,85,0.5) !important;
+}
+.maplibregl-ctrl-group button { filter: invert(1); }
+
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer; width: 100%;
+}
+input[type="range"]::-webkit-slider-track { height: 4px; background: #334155; border-radius: 2px; }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
+  background: #e2e8f0; margin-top: -8px; box-shadow: 0 0 10px rgba(226,232,240,0.5);
+}
+input[type="range"]::-moz-range-track { height: 4px; background: #334155; border-radius: 2px; }
+input[type="range"]::-moz-range-thumb {
+  height: 20px; width: 20px; border-radius: 50%;
+  background: #e2e8f0; border: none; box-shadow: 0 0 10px rgba(226,232,240,0.5);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
