@@ -80,8 +80,9 @@ export default function Home() {
 
   return (
     <div style={{
-      position: 'relative', width: '100vw', height: '100vh',
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh',
       overflow: 'hidden', background: t.bg, transition: 'background 0.4s ease',
+      display: 'flex', flexDirection: 'column',
     }}>
       {/* Vignette overlay */}
       <div style={{
@@ -91,10 +92,11 @@ export default function Home() {
 
       {/* Header */}
       <header style={{
-        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
+        position: 'relative', zIndex: 30,
         padding: '20px 24px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
         animation: 'fadeIn 0.6s ease',
+        flexShrink: 0,
       }}>
         <div>
           <h1 style={{
@@ -126,31 +128,36 @@ export default function Home() {
         </button>
       </header>
 
-      {/* Map */}
-      <Map
-        explorations={explorations}
-        onMapClick={handleMapClick}
-        onMarkerClick={setSelected}
-        disabled={loading}
-        theme={t}
-        isDark={isDark}
-        pendingClick={pendingClick}
-      />
+      {/* Map + Timeline flex container */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+        {/* Map */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          <Map
+            explorations={explorations}
+            onMapClick={handleMapClick}
+            onMarkerClick={setSelected}
+            disabled={loading}
+            theme={t}
+            isDark={isDark}
+            pendingClick={pendingClick}
+          />
+        </div>
 
-      {/* Confirm pin popup */}
-      {pendingClick && !loading && (
-        <ConfirmPin
-          lat={pendingClick.lat}
-          lng={pendingClick.lng}
-          year={year}
-          onConfirm={handleConfirm}
-          onCancel={handleCancel}
-          theme={t}
-        />
-      )}
+        {/* Confirm pin popup */}
+        {pendingClick && !loading && (
+          <ConfirmPin
+            lat={pendingClick.lat}
+            lng={pendingClick.lng}
+            year={year}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            theme={t}
+          />
+        )}
 
-      {/* Timeline */}
-      <Timeline year={year} onYearChange={setYear} theme={t} />
+        {/* Timeline */}
+        <Timeline year={year} onYearChange={setYear} theme={t} />
+      </div>
 
       {/* Gallery */}
       {explorations.length > 0 && (

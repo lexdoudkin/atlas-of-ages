@@ -19,28 +19,25 @@ function fmtYear(y: number): string {
 export default function Timeline({ year, onYearChange, theme }: { year: number; onYearChange: (y: number) => void; theme: Theme }) {
   return (
     <div style={{
-      position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 30,
+      position: 'relative', zIndex: 30,
+      flexShrink: 0,
       animation: 'slideUp 0.5s ease',
+      background: theme.bg,
+      transition: 'background 0.4s ease',
+      borderTop: `1px solid ${theme.surfaceBorder}`,
     }}>
-      {/* Gradient fade */}
+      {/* Solid background panel with padding */}
       <div style={{
-        height: '40px',
-        background: theme.bgGradientBottom,
-      }} />
-      {/* Solid background panel */}
-      <div style={{
-        background: theme.bg,
-        padding: '0 24px 20px',
-        transition: 'background 0.4s ease',
+        padding: '20px 24px 16px',
       }}>
-        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-          {/* Year */}
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', width: '100%' }}>
+          {/* Year - smaller on mobile */}
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
             <span style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(36px, 6vw, 56px)',
+              fontSize: 'clamp(28px, 5vw, 44px)',
               fontWeight: 300, letterSpacing: '0.08em',
-              color: theme.text, lineHeight: 1,
+              color: theme.text, lineHeight: 1.2,
               transition: 'color 0.3s ease',
             }}>
               {fmtYear(year)}
@@ -48,18 +45,18 @@ export default function Timeline({ year, onYearChange, theme }: { year: number; 
           </div>
 
           {/* Slider */}
-          <div style={{ marginBottom: '16px', padding: '0 4px' }}>
+          <div style={{ marginBottom: '12px', padding: '0 4px' }}>
             <input
               type="range" min={-5000} max={2025} value={year}
               onChange={e => onYearChange(parseInt(e.target.value))}
-              style={{ width: '100%' }}
+              style={{ width: '100%', height: '28px' }}
             />
           </div>
 
           {/* Era pills */}
           <div style={{
             display: 'flex', justifyContent: 'center',
-            flexWrap: 'wrap', gap: '6px',
+            flexWrap: 'wrap', gap: '6px', rowGap: '8px',
           }}>
             {ERAS.map(era => {
               const isActive = Math.abs(year - era.year) < 400
