@@ -6,8 +6,7 @@ html, body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-.leaflet-container { background: #000 !important; }
-.leaflet-tile-pane { opacity: 1; }
+.leaflet-container { background: #000 !important; z-index: 1 !important; }
 .leaflet-tile { background: transparent !important; }
 .leaflet-control-attribution { display: none !important; }
 .leaflet-control-zoom {
