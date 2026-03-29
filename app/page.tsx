@@ -84,10 +84,10 @@ export default function Home() {
       overflow: 'hidden', background: t.bg, transition: 'background 0.4s ease',
       display: 'flex', flexDirection: 'column',
     }}>
-      {/* Vignette overlay */}
+      {/* Vignette overlay - elegant edge fade */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
-        background: `radial-gradient(ellipse 80% 80% at 50% 50%, transparent 50%, ${t.bg}88 75%, ${t.bg} 100%)`,
+        background: `radial-gradient(ellipse 85% 85% at 50% 50%, transparent 40%, ${t.bg}44 70%, ${t.bg} 100%)`,
       }} />
 
       {/* Header */}
