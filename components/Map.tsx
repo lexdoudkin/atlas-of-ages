@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import maplibregl from 'maplibre-gl'
 import type { Exploration } from '../lib/storage'
 
 interface Props {
@@ -13,66 +12,79 @@ interface Props {
 
 export default function Map({ explorations, onMapClick, onMarkerClick, disabled }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<maplibregl.Map | null>(null)
-  const markersRef = useRef<maplibregl.Marker[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersRef = useRef<any[]>([])
   const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: {
-        version: 8 as const,
-        sources: {
-          carto: {
-            type: 'raster',
-            tiles: [
-              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-            ],
-            tileSize: 256,
-          },
-        },
-        layers: [{ id: 'carto', type: 'raster', source: 'carto' }],
-      },
-      center: [20, 35],
-      zoom: 2.5,
-      maxZoom: 16,
-      minZoom: 1.5,
+    // Dynamic import of Leaflet (client-side only)
+    import('leaflet').then((L) => {
+      // Fix default icons
+      delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      })
+
+      const map = L.map(containerRef.current!, {
+        center: [35, 20],
+        zoom: 3,
+        minZoom: 2,
+        maxZoom: 16,
+        zoomControl: false,
+      })
+
+      L.control.zoom({ position: 'topright' }).addTo(map)
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OSM &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(map)
+
+      map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
+        if (!disabled) onMapClick(e.latlng.lat, e.latlng.lng)
+      })
+
+      map.getContainer().style.cursor = 'crosshair'
+      mapRef.current = { map, L }
+      setMapReady(true)
     })
 
-    map.getCanvas().style.cursor = 'crosshair'
-    map.addControl(new maplibregl.NavigationControl(), 'top-right')
-    map.on('load', () => setMapReady(true))
-    map.on('click', (e: maplibregl.MapMouseEvent) => { if (!disabled) onMapClick(e.lngLat.lat, e.lngLat.lng) })
-
-    mapRef.current = map
-    return () => { map.remove(); mapRef.current = null }
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.map.remove()
+        mapRef.current = null
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (!mapRef.current || !mapReady) return
-    markersRef.current.forEach(m => m.remove())
+    const { map, L } = mapRef.current
+
+    markersRef.current.forEach((m: { remove: () => void }) => m.remove())
     markersRef.current = []
 
     explorations.forEach(exp => {
-      const el = document.createElement('div')
-      Object.assign(el.style, {
-        width: '40px', height: '40px', borderRadius: '50%',
-        border: '2px solid rgba(148,163,184,0.7)',
-        backgroundImage: `url(${exp.imageData})`, backgroundSize: 'cover', backgroundPosition: 'center',
-        cursor: 'pointer', boxShadow: '0 0 12px rgba(0,0,0,0.8)', transition: 'transform 0.2s',
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(148,163,184,0.7);background-image:url(${exp.imageData});background-size:cover;background-position:center;cursor:pointer;box-shadow:0 0 12px rgba(0,0,0,0.8);transition:transform 0.2s;" onmouseenter="this.style.transform='scale(1.3)'" onmouseleave="this.style.transform='scale(1)'"></div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
       })
-      el.onmouseenter = () => { el.style.transform = 'scale(1.3)' }
-      el.onmouseleave = () => { el.style.transform = 'scale(1)' }
-      el.onclick = (e) => { e.stopPropagation(); onMarkerClick(exp) }
 
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([exp.lng, exp.lat])
-        .addTo(mapRef.current!)
+      const marker = L.marker([exp.lat, exp.lng], { icon }).addTo(map)
+      marker.on('click', (e: { originalEvent: { stopPropagation: () => void } }) => {
+        e.originalEvent.stopPropagation()
+        onMarkerClick(exp)
+      })
       markersRef.current.push(marker)
     })
   }, [explorations, mapReady, onMarkerClick])
