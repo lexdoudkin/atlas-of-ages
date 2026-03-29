@@ -25,7 +25,16 @@ export default function Home() {
 
   useEffect(() => {
     setReady(true)
-    getExplorations().then(setExplorations).catch(() => {})
+    // One-time clear of old demo data
+    const cleared = localStorage.getItem('atlas-cleared-v2')
+    if (!cleared) {
+      // Clear IndexedDB
+      const req = indexedDB.deleteDatabase('atlas-of-ages')
+      req.onsuccess = () => { localStorage.setItem('atlas-cleared-v2', '1') }
+      req.onerror = () => { localStorage.setItem('atlas-cleared-v2', '1') }
+    } else {
+      getExplorations().then(setExplorations).catch(() => {})
+    }
     const saved = localStorage.getItem('atlas-theme')
     if (saved === 'dark') setIsDark(true)
   }, [])

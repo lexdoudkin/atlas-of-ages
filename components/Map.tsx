@@ -75,7 +75,7 @@ export default function Map({ explorations, onMapClick, onMarkerClick, disabled,
         if (!disabled) onMapClick(e.latlng.lat, e.latlng.lng)
       })
 
-      map.getContainer().style.cursor = 'crosshair'
+      map.getContainer().style.cursor = 'pointer'
       mapRef.current = { map, L }
       setMapReady(true)
     })
@@ -180,7 +180,7 @@ export default function Map({ explorations, onMapClick, onMarkerClick, disabled,
   return (
     <div ref={containerRef} style={{
       position: 'absolute', inset: 0,
-      cursor: disabled ? 'wait' : 'crosshair',
+      cursor: disabled ? 'wait' : 'pointer',
       background: theme.mapBg,
       transition: 'background 0.4s ease',
     }} />

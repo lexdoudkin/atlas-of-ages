@@ -31,7 +31,7 @@ export interface Theme {
 export const lightTheme: Theme = {
   bg: '#F8F6F3',
   bgGradientTop: 'linear-gradient(to bottom, rgba(248,246,243,0.98) 0%, rgba(248,246,243,0.85) 60%, transparent 100%)',
-  bgGradientBottom: 'linear-gradient(to top, rgba(248,246,243,0.99) 0%, rgba(248,246,243,0.92) 50%, transparent 100%)',
+  bgGradientBottom: 'linear-gradient(to top, #F8F6F3 0%, rgba(248,246,243,0.97) 60%, rgba(248,246,243,0.7) 80%, transparent 100%)',
   text: '#1A1612',
   textSecondary: '#7A7067',
   accent: '#B07D4F',
@@ -61,7 +61,7 @@ export const lightTheme: Theme = {
 export const darkTheme: Theme = {
   bg: '#050505',
   bgGradientTop: 'linear-gradient(to bottom, rgba(5,5,5,0.98) 0%, rgba(5,5,5,0.85) 60%, transparent 100%)',
-  bgGradientBottom: 'linear-gradient(to top, rgba(5,5,5,0.99) 0%, rgba(5,5,5,0.92) 50%, transparent 100%)',
+  bgGradientBottom: 'linear-gradient(to top, #050505 0%, rgba(5,5,5,0.97) 60%, rgba(5,5,5,0.7) 80%, transparent 100%)',
   text: '#F5F0EB',
   textSecondary: '#8A8178',
   accent: '#D4A574',

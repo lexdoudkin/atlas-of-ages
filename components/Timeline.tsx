@@ -21,7 +21,7 @@ export default function Timeline({ year, onYearChange, theme }: { year: number; 
     <div style={{
       position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 30,
       background: theme.bgGradientBottom,
-      padding: '56px 24px 28px',
+      padding: '40px 24px 24px',
       animation: 'slideUp 0.5s ease',
     }}>
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>
