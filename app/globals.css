@@ -6,12 +6,21 @@ html, body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-.maplibregl-ctrl-attrib { display: none !important; }
-.maplibregl-ctrl-group {
-  background: rgba(15,23,42,0.8) !important;
+.leaflet-control-attribution { display: none !important; }
+.leaflet-control-zoom {
   border: 1px solid rgba(51,65,85,0.5) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
 }
-.maplibregl-ctrl-group button { filter: invert(1); }
+.leaflet-control-zoom a {
+  background: rgba(15,23,42,0.85) !important;
+  color: #94a3b8 !important;
+  border-color: rgba(51,65,85,0.3) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: rgba(30,41,59,0.9) !important;
+  color: #e2e8f0 !important;
+}
 
 input[type="range"] {
   -webkit-appearance: none; appearance: none;
