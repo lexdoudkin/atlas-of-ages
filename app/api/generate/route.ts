@@ -52,10 +52,10 @@ function placeholderSvg(place: string, yearStr: string): string {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
 }
 
-async function generateWithVertex(prompt: string): Promise<string | null> {
+async function generateWithVertex(prompt: string): Promise<{image: string | null, error: string | null}> {
   const project = process.env.GOOGLE_CLOUD_PROJECT
   const region = process.env.GOOGLE_CLOUD_REGION || 'us-central1'
-  if (!project) return null
+  if (!project) return { image: null, error: 'GOOGLE_CLOUD_PROJECT not set' }
 
   try {
     let token: string | null | undefined = null
@@ -71,7 +71,7 @@ async function generateWithVertex(prompt: string): Promise<string | null> {
       token = tokenRes.token
     }
 
-    if (!token) return null
+    if (!token) return { image: null, error: 'Failed to get access token (no credentials found)' }
 
     const url = `https://${region}-aiplatform.googleapis.com/v1/projects/${project}/locations/${region}/publishers/google/models/imagen-3.0-generate-001:predict`
 
@@ -93,18 +93,17 @@ async function generateWithVertex(prompt: string): Promise<string | null> {
     })
 
     if (!res.ok) {
-      console.error('Vertex AI error:', res.status, await res.text())
-      return null
+      const errorText = await res.text()
+      return { image: null, error: `Vertex AI ${res.status}: ${errorText.substring(0, 500)}` }
     }
 
     const data = await res.json()
     if (data.predictions?.[0]?.bytesBase64Encoded) {
-      return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`
+      return { image: `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`, error: null }
     }
-    return null
+    return { image: null, error: 'No image in Vertex AI response: ' + JSON.stringify(data).substring(0, 200) }
   } catch (e) {
-    console.error('Vertex AI error:', e)
-    return null
+    return { image: null, error: `Exception: ${e instanceof Error ? e.message : String(e)}` }
   }
 }
 
@@ -116,7 +115,9 @@ export async function POST(req: NextRequest) {
     const yearStr = formatYear(year)
     const prompt = buildPrompt(placeName, year, era, lat, lng)
 
-    let imageData = await generateWithVertex(prompt)
+    const vertexResult = await generateWithVertex(prompt)
+    let imageData = vertexResult.image
+    const vertexError = vertexResult.error
     if (!imageData) {
       imageData = placeholderSvg(placeName, yearStr)
     }
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       exploration: { lat, lng, year, era, placeName, imageData, prompt },
+      vertexError: vertexError || null,
     })
   } catch (e) {
     console.error('Generate error:', e)
