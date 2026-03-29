@@ -130,14 +130,27 @@ function getTerrainContext(lat: number, lng: number): string {
   return 'equatorial, rainforest or open savanna depending on elevation'
 }
 
-function buildPrompt(
+async function buildPrompt(
   placeName: string, year: number, era: string,
   lat: number, lng: number,
   country: string, region: string, locationType: string
-): string {
+): Promise<string> {
   const yearStr = formatYear(year)
   const historicalCtx = getHistoricalContext(lat, lng, year, country, region)
   const terrain = getTerrainContext(lat, lng)
+
+  // Fetch satellite/terrain metadata from our endpoint
+  let terrainConstraint = ''
+  try {
+    const satRes = await fetch(`http://localhost:3000/api/satellite?lat=${lat}&lon=${lng}&year=${year}`)
+    if (satRes.ok) {
+      const satData = await satRes.json()
+      terrainConstraint = satData.terrain || ''
+      console.log(`[Terrain] ${placeName}: ${terrainConstraint}`)
+    }
+  } catch (e) {
+    console.warn('Failed to fetch satellite data:', e)
+  }
 
   // For very ancient periods or remote areas, emphasize natural landscape
   const isPrehistoric = year < -3000
@@ -147,6 +160,7 @@ function buildPrompt(
   let sceneDescription: string
   if (locationType === 'ocean') {
     sceneDescription = `Open ocean at coordinates ${lat.toFixed(1)}°, ${lng.toFixed(1)}°. Vast empty sea stretching to the horizon, appropriate wave conditions for the latitude. ${year < 1500 ? 'No ships visible.' : 'Perhaps a period-appropriate sailing vessel in the distance.'}`
+    terrainConstraint = 'ONLY water, waves, horizon. No land. No people.'
   } else if (isPrehistoric && isRemote) {
     sceneDescription = `Pristine natural landscape of ${region || country || 'this region'} in ${yearStr}. No human structures. Pure wilderness: ${terrain}. The land as it existed before human civilization. Ground-level perspective as if you are standing there.`
   } else if (isAncient && isRemote) {
@@ -156,13 +170,16 @@ function buildPrompt(
     sceneDescription = `${locationDesc} in ${yearStr} (${era}). ${historicalCtx || `Period-appropriate architecture and daily life for ${country || 'this region'}.`} Street-level perspective showing authentic buildings, people in period clothing, transportation methods of the era. Natural environment: ${terrain}.`
   }
 
-  return `Ultra-realistic 4K photograph: ${sceneDescription}
+  // If we have specific terrain constraints (e.g., "ONLY water", "DENSE FOREST"), enforce them
+  const constraintNote = terrainConstraint ? `\n\nTERRAIN CONSTRAINT: ${terrainConstraint}` : ''
+
+  return `Ultra-realistic 4K photograph: ${sceneDescription}${constraintNote}
 
 CRITICAL REQUIREMENTS:
 - This must look like a real photograph taken by a modern 4K camera, just transported back in time
 - Photorealistic lighting (natural sunlight, accurate shadows, atmospheric haze)
 - Historically accurate: no anachronistic elements whatsoever
-- If this location had no major civilization in ${yearStr}, show ONLY natural landscape (forest, plains, tundra, desert) with no buildings
+- If this location had no major civilization in ${yearStr}, show ONLY natural landscape (forest, plains, tundra, desert, water) with no buildings or roads
 - Ground-level human perspective, eye-height camera angle
 - Rich detail: textures of stone, wood, fabric, soil, vegetation all visible
 - 16:9 landscape format, cinematic composition
@@ -244,7 +261,7 @@ export async function POST(req: NextRequest) {
     const geo = await reverseGeocode(lat, lng)
     const era = getEra(year)
     const yearStr = formatYear(year)
-    const prompt = buildPrompt(geo.placeName, year, era, lat, lng, geo.country, geo.region, geo.type)
+    const prompt = await buildPrompt(geo.placeName, year, era, lat, lng, geo.country, geo.region, geo.type)
 
     const vertexResult = await generateWithVertex(prompt)
     let imageData = vertexResult.image
